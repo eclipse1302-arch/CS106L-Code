@@ -242,6 +242,7 @@ std::vector<node*> new_buckets_array(new_bucket_count);
  *
  * Complexity: O(N), where N = std::distance(first, last);
  */
+
 template <typename K, typename M, typename H>
 template <typename InputIt>
 HashMap<K, M, H>::HashMap(InputIt first, InputIt last, size_t bucket_count, const H& hash) : HashMap(bucket_count, hash) {
@@ -287,16 +288,18 @@ M& HashMap<K, M, H>::operator[](const K& key) {
      */
     // complete the function implementation (1 line of code)
     // isn't it funny how the bad starter code is longer than the correct answer?
-    return insert({key, {}}).first->second;
+    return insert{key,{}}.first->second;
+
 }
 
 template <typename K, typename M, typename H>
 bool operator==(const HashMap<K, M, H>& lhs, const HashMap<K, M, H>& rhs) {
     // complete the function implementation (~4-5 lines of code)
-    if (lhs.size() != rhs.size()) return false;
-    for (const auto& [key, value] : lhs) {
+    for(const auto& [key,value] : lhs){
         const auto& iter = rhs.find(key);
-        if (iter == rhs.end() || iter->second != value) return false;
+        if( iter == rhs.end() || (*iter).second != value){
+            return false;
+        }
     }
     return true;
 }
@@ -310,18 +313,22 @@ bool operator!=(const HashMap<K, M, H>& lhs, const HashMap<K, M, H>& rhs) {
 template <typename K, typename M, typename H>
 std::ostream& operator<<(std::ostream& os, const HashMap<K, M, H>& rhs) {
     // complete the function implementation (~7 lines of code)
+/*     os << "{" ;
+    for(const auto& [key , value] : rhs){
+        os << key << ":" << value << ",";
+    }
+    os << "}"; 无法处理多余的",
+    return os; */
     os << "{";
     auto iter = rhs.begin();
-    if (iter != rhs.end()) {
-        os << iter->first << ":" << iter->second;
-        ++iter;
-    }
-    while (iter != rhs.end()) {
-        os << ", " << iter->first << ":" << iter->second;
-        ++iter;
+    os << iter->first << ":" << iter->second;
+    iter++;
+    while(iter != rhs.end()){
+        os << "," << iter->first << ":" << iter->second;
+        iter++;
     }
     os << "}";
-    return os;
+    return os; //无序序列不能用<且const auto&不能支持++，只在for中遍历使用 
 }
 
 // Milestone 4 (required) - special member functions
@@ -329,6 +336,7 @@ std::ostream& operator<<(std::ostream& os, const HashMap<K, M, H>& rhs) {
 
 // provide the function headers and implementations (~35 lines of code)
 // copy constructor
+
 template <typename K, typename M, typename H>
 HashMap<K, M, H>::HashMap(const HashMap& rhs) : HashMap(rhs.bucket_count(), rhs._hash_function) {
     for (auto [key, value] : rhs) {
@@ -338,20 +346,22 @@ HashMap<K, M, H>::HashMap(const HashMap& rhs) : HashMap(rhs.bucket_count(), rhs.
 
 // copy assignment operator
 template <typename K, typename M, typename H>
-HashMap<K, M, H>& HashMap<K, M, H>::operator=(const HashMap& rhs) {
-    if (&rhs == this) return *this;
+HashMap<K,M,H>& HashMap<K,M,H>::operator=(const HashMap<K,M,H>& rhs){
+    if(this == &rhs){ //利用this==&rhs 比较地址可以简化时间复杂度O(n)变成O(1)
+        return *this;
+    }
     clear();
-    for (auto [key, value] : rhs) {
-        insert({key, value});
+    for(const auto& [key,value] : rhs){
+        insert({key,value});
     }
     return *this;
 }
 
+
 // move constructor
-template <typename K, typename M, typename H>
-HashMap<K, M, H>::HashMap(HashMap&& rhs) :
-    _size{std::move(rhs._size)},
-    _hash_function{std::move(rhs._hash_function)},
+HashMap<K,M,H>::HashMap(HashMap&& rhs){
+    _size{std::move(rhs._size)};
+    _hash_function{std::move(rhs._hash_function)};
     _buckets_array{rhs.bucket_count(), nullptr} {
     for (size_t i = 0; i < rhs.bucket_count(); i++) {
         _buckets_array[i] = std::move(rhs._buckets_array[i]);
@@ -360,20 +370,25 @@ HashMap<K, M, H>::HashMap(HashMap&& rhs) :
     rhs._size = 0;
 }
 
+}
+
 // move assignment operator
-template <typename K, typename M, typename H>
-HashMap<K, M, H>& HashMap<K, M, H>::operator=(HashMap&& rhs) {
-    if (this != &rhs) {
-        clear();
-        _size = std::move(rhs._size);
-        _hash_function = std::move(rhs._hash_function);
-        _buckets_array.resize(rhs.bucket_count());
-        for (size_t i = 0; i < rhs.bucket_count(); i++) {
-            _buckets_array[i] = std::move(rhs._buckets_array[i]);
-            rhs._buckets_array[i] = nullptr;
-        }
-        rhs._size = 0;
+template<typename K, typename M, typename H>
+HashMap<K,M,N> HashMap<K,M,N>::operator=(const HashMap<K,M,H>&& rhs){
+    if(this == &rhs){
+        return *this;
     }
+    clear();
+    _size{std::move(rhs._size)};
+    _hash_function{std::move(rhs._hash_function)};
+    _buckets_array.resize(rhs.bucket_count());
+    for (size_t i = 0; i < rhs.bucket_count(); i++) {
+        _buckets_array[i] = std::move(rhs._buckets_array[i]);
+        rhs._buckets_array[i] = nullptr;
+    }
+    rhs._size=0; //让rhs被搬移后行为良好，方便析构查询等后续操作
     return *this;
+
+
 }
 /* end student code */

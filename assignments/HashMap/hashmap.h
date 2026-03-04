@@ -10,6 +10,7 @@
 #include <iomanip>              // for setw, setprecision, setfill, right
 #include <sstream>              // for istringstream
 #include "hashmap_iterator.h"
+#include <map>
 
 // add any other includes that are necessary
 
